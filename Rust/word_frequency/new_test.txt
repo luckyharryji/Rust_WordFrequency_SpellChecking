@@ -1,0 +1,2 @@
+new_test.txt
+word_freq(&mut count_table, s, |c: char| !c.is_alphabetic())
