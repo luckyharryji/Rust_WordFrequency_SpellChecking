@@ -11,16 +11,40 @@ use std::io::prelude::*;
 use std::fs::File;
 use std::collections::HashMap;
 use itertools::Itertools;
+use std::io::BufReader;
+use std::io::stdin;
 
 fn main(){
-    read_file_and_count("test.txt");
+    // read_file_and_count("test.txt");
+    let files = get_input_file_name(stdin());
+}
+
+
+fn get_input_file_name<R: Read>(reader: R){
+    let mut lines = BufReader::new(reader).lines();
+
+    while let Some(Ok(line)) = lines.next() {
+        if line == "EOF" {break}
+        let mut count_table = CountTable::new();
+        test_buf_read(&mut count_table,line);
+    }
+}
+
+fn test_buf_read(count_table: &mut CountTable, file_name:String)-> std::io::Result<()>{
+    let mut f = try!(File::open(file_name));
+    let mut reader = BufReader::new(f).lines();
+
+    while let Some(Ok(line)) = reader.next(){
+        println!("{}", line);
+        get_freqs(&mut count_table, line)
+    }
+    Ok(())
 }
 
 fn read_file_and_count(file_name:&str) -> std::io::Result<()>{
 	let mut f = try!(File::open(file_name));
 	let mut s = String::new();
 	try!(f.read_to_string(&mut s));
-	println!("String in the file is : {}", s);
 	print!("{}", get_freqs(s));
 	Ok(())
 }
@@ -32,36 +56,51 @@ fn increment_word(map: &mut CountTable, word: String) {
     *map.entry(word).or_insert(0) += 1;
 }
 
+pub fn get_freqs(count_table: &mut CountTable, s: String) -> String {
+    let count = word_freq_count(&mut count_table, s);
+    sort_by_freq(count)
+}
 
-fn word_freq<F>(s: String, sf: F) -> HashMap<String, u32>
+
+fn word_freq<F>(count_table: &mut CountTable, s: String, sf: F) -> CountTable
     where F : Fn(char) -> bool {
-
         s.split(sf)
             .filter( |s| !s.is_empty() )
             .map(|s| { s.chars().flat_map(char::to_lowercase).collect::<String>() })
-            .fold(HashMap::new(), |mut m, i| {
-                *m.entry(i).or_insert(0u32) += 1;
+            .fold(count_table, |mut m, i| {
+                increment_word(&mut m,i);
                 m
             })
     }
 
-fn word_freq_count(s: String) -> HashMap<String, u32> {
-    word_freq(s, |c: char| !c.is_alphabetic())
+fn word_freq_count(count_table: &mut CountTable,s: String) -> CountTable {
+    word_freq(count_table, s, |c: char| !c.is_alphabetic())
 }
 
 // Preparing for output
-fn sort_by_freq(c: HashMap<String, u32>) -> String {
+fn sort_by_freq(c: CountTable) -> String {
     c.iter()
         .sort_by(|a, b| Ord::cmp(&b.1, &a.1))
         .iter()
         .map(|&(k, v)| format!("{} {}", k, v))
         .fold("".to_string(), |i, v| format!("{}{}\n", i, v))
-} 
-
-pub fn get_freqs(s: String) -> String {
-    let count = word_freq_count(s);
-    sort_by_freq(count)
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #[cfg(test)]
 mod increment_word_tests {
@@ -112,7 +151,6 @@ mod increment_word_tests {
         assert_eq!(Some(&2), h.get("two"));
         assert_eq!(Some(&3), h.get("three"));
         assert_eq!(2, h.len());
-
         h
     }
 }
