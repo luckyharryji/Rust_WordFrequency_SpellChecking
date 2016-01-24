@@ -59,6 +59,11 @@ fn get_input_file_name<R: Read>(reader: R){
 
     while let Some(Ok(line)) = lines.next() {
         if line == "EOF" {break}
+        // while Some(Ok(print_word_frequency_of_file(line)))
+        // match Ok(print_word_frequency_of_file(line).unwrap()) {
+        //      Some(Ok(())) => println!("\n"),
+        //      _ => break
+        //  }
         print_word_frequency_of_file(line);
     }
 }
