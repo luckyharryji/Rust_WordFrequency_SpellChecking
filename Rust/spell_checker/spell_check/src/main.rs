@@ -77,6 +77,7 @@ fn inserts(word:&Vec<u8>,result:&mut Vec<Vec<u8>>, alphabet:&str){
 				}
 				ins.push(c.to_owned());
 			}
+			result.push(ins);
 		}
 	}
 
@@ -109,6 +110,9 @@ fn remove_duplicate(words: &mut Vec<Vec<u8>>){
 
 
 fn parse_candidate(words:&mut Vec<Vec<u8>>, model:&HashMap<Vec<u8>,i64>){
+	// for word in words.iter(){
+	// 	print_vector_word(&word);
+	// }
 	words.retain(|word| model.contains_key(&word[..]));
 }
 
@@ -139,24 +143,28 @@ fn edit2(word:&Vec<u8>,model:&HashMap<Vec<u8>,i64>)->Vec<Vec<u8>>{
 		}
 	}
 	remove_duplicate(&mut result);
-	result
+	return result
 }
 
 fn correct(word:&str, model:&HashMap<Vec<u8>, i64>) -> Vec<u8>{
 	let vector_word:Vec<u8> = word.as_bytes().to_owned();
 
 	if model.contains_key(&vector_word[..]){
+		println!("has key: ");
 		return vector_word
 	}
+
 
 	let mut _one_edit = edit1(&vector_word);
 	parse_candidate(&mut _one_edit,&model);
 	if _one_edit.len()>0{
-		select_candidate(&_one_edit,model);
+		println!("1 edit difference:");
+		return select_candidate(&_one_edit,model);
 	}
 	let _two_edit = edit2(&vector_word,&model);
 	if _two_edit.len()>0{
-		select_candidate(&_two_edit,model);
+		println!("2 edit difference");
+		return select_candidate(&_two_edit,model);
 	}
 	vector_word
 }
@@ -175,8 +183,13 @@ fn print_vector_word(vector_word:&Vec<u8>){
 
 
 fn main(){
-	let mut file = File::open("test.txt").unwrap();
+	let args: Vec<_> = env::args().collect();
+	if args.len()!= 2{
+		panic!("Error with the name of the training file.");
+	}
 	let mut content = String::new();
+	let mut file = File::open(&args[1]).expect("Error");
+	
 	file.read_to_string(&mut content).unwrap();
 
 	let re = Regex::new(r"([a-z]+)").unwrap();
@@ -190,6 +203,8 @@ fn main(){
 	}
 
 	let model = train(&words);
+
+	println!("Trainging end");
 
 	read_line_of_input(stdin(),&model);
 	// for (iter,arg) in env::args().enumerate(){
