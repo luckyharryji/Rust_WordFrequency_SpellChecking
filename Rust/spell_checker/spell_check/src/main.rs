@@ -23,15 +23,12 @@ fn train(words:&Vec<Vec<u8>>)->HashMap<Vec<u8>,i64>{
 static ALPHABET : &'static str = "abcdefghijklmnopqrstuvwxyz";
 
 fn edit1(word:&Vec<u8>)-> Vec<Vec<u8>>{
-	// let alphabet = "abcdefghijklmnopqrstuvwxyz";
 	let mut result = Vec::<Vec<u8>>::new();
 
-	delete(word, &mut result);
-	// replace(word, &mut result, &alphabet);
-	// inserts(word, &mut result, &alphabet);
-	replace(word, &mut result);
-	inserts(word, &mut result);
-	transpose(word,&mut result);
+	count_delete(word, &mut result);
+	count_replace(word, &mut result);
+	count_inserts(word, &mut result);
+	count_transpose(word,&mut result);
 
 	remove_duplicate(&mut result);
 
@@ -39,12 +36,12 @@ fn edit1(word:&Vec<u8>)-> Vec<Vec<u8>>{
 }
 
 
-fn delete(word:&Vec<u8>,result:&mut Vec<Vec<u8>>){
+fn count_delete(word:&Vec<u8>,result:&mut Vec<Vec<u8>>){
 	for i in 0..word.len(){
 		let mut delete_one = Vec::<u8>::new();
-		for (itr,c) in word.iter().enumerate(){
-			if itr != i{
-				let ch = c.to_owned();
+		for (index,alpha_num) in word.iter().enumerate(){
+			if index != i{
+				let ch = alpha_num.to_owned();
 				delete_one.push(ch);
 			}
 		}
@@ -53,13 +50,13 @@ fn delete(word:&Vec<u8>,result:&mut Vec<Vec<u8>>){
 }
 
 
-fn replace(word: &Vec<u8>, result: &mut Vec<Vec<u8>>){
+fn count_replace(word: &Vec<u8>, result: &mut Vec<Vec<u8>>){
 	for i in 0..word.len(){
 		for alpha in ALPHABET.chars(){
 			let mut replace_word = Vec::<u8>::new();
-			for (itr, c) in word.iter().enumerate(){
-				if itr!= i{
-					replace_word.push(c.to_owned());
+			for (index, alpha_num) in word.iter().enumerate(){
+				if index!= i{
+					replace_word.push(alpha_num.to_owned());
 				}
 				else{
 					replace_word.push(alpha as u8);
@@ -71,15 +68,15 @@ fn replace(word: &Vec<u8>, result: &mut Vec<Vec<u8>>){
 }
 
 
-fn inserts(word:&Vec<u8>,result:&mut Vec<Vec<u8>>){
+fn count_inserts(word:&Vec<u8>,result:&mut Vec<Vec<u8>>){
 	for i in 0..word.len(){
 		for alpha in ALPHABET.chars(){
 			let mut ins = Vec::<u8>::new();
-			for (iter, c) in word.iter().enumerate(){
-				if iter == i{
+			for (index, alpha_num) in word.iter().enumerate(){
+				if index == i{
 					ins.push(alpha as u8);
 				}
-				ins.push(c.to_owned());
+				ins.push(alpha_num.to_owned());
 			}
 			result.push(ins);
 		}
@@ -87,8 +84,8 @@ fn inserts(word:&Vec<u8>,result:&mut Vec<Vec<u8>>){
 
 	for alpha in ALPHABET.chars(){
 		let mut ins = Vec::<u8>::new();
-		for c in word.iter(){
-			ins.push(c.to_owned());
+		for alpha_num in word.iter(){
+			ins.push(alpha_num.to_owned());
 		}
 		ins.push(alpha as u8);
 		result.push(ins);
@@ -96,7 +93,7 @@ fn inserts(word:&Vec<u8>,result:&mut Vec<Vec<u8>>){
 }
 
 
-fn transpose(word:&Vec<u8>, result:&mut Vec<Vec<u8>>){
+fn count_transpose(word:&Vec<u8>, result:&mut Vec<Vec<u8>>){
 	for i in 0..(word.len()-1){
 		let mut trans_word = word.to_owned();
 		trans_word.swap(i,i+1);
@@ -112,9 +109,6 @@ fn remove_duplicate(words: &mut Vec<Vec<u8>>){
 
 
 fn parse_candidate(words:&mut Vec<Vec<u8>>, model:&HashMap<Vec<u8>,i64>){
-	// for word in words.iter(){
-	// 	print_vector_word(&word);
-	// }
 	words.retain(|word| model.contains_key(&word[..]));
 }
 
@@ -122,7 +116,7 @@ fn parse_candidate(words:&mut Vec<Vec<u8>>, model:&HashMap<Vec<u8>,i64>){
 fn select_candidate(candidates: &Vec<Vec<u8>>, model:&HashMap<Vec<u8>,i64>)->Vec<u8>{
 	let mut count = 0;
 	let mut result = Vec::<u8>::new();
-	for candidate in candidates.iter(){
+	for candidate in candidates{
 		let temp_count = model.get(candidate).unwrap().to_owned();
 		if temp_count>count{
 			count = temp_count;
@@ -148,37 +142,36 @@ fn edit2(word:&Vec<u8>,model:&HashMap<Vec<u8>,i64>)->Vec<Vec<u8>>{
 	return result
 }
 
+
 fn correct(word:&str, model:&HashMap<Vec<u8>, i64>){
 	let vector_word:Vec<u8> = word.as_bytes().to_owned();
 
 	if model.contains_key(&vector_word[..]){
-		print_vector_word(&vector_word);
+		print_vector_word(&vector_word); // format input when find origin word
 		print!("\n");
 		return
 	}
 
-
 	let mut _one_edit = edit1(&vector_word);
 	parse_candidate(&mut _one_edit,&model);
 	if _one_edit.len()>0{
-		// println!("1 edit difference:");
-		// return select_candidate(&_one_edit,model);
-		print_vector_word(&vector_word);
+		print_vector_word(&vector_word); // format input when one edit different
 		print!(", ");
 		print_vector_word(&select_candidate(&_one_edit,model));
 		print!("\n");
 		return 
 	}
-	let _two_edit = edit2(&vector_word,&model);
+	
+	let mut _two_edit = edit2(&vector_word,&model);
+	parse_candidate(&mut _two_edit,&model);
 	if _two_edit.len()>0{
-		// println!("2 edit difference");
-		// return select_candidate(&_two_edit,model);
-		print_vector_word(&vector_word);
+		print_vector_word(&vector_word); // format input when two edit different
 		print!(", ");
 		print_vector_word(&select_candidate(&_two_edit,model));
 		print!("\n");
 		return 
 	}
+
 	print_vector_word(&vector_word);
 	print!(", -\n");
 }
@@ -187,12 +180,29 @@ fn correct(word:&str, model:&HashMap<Vec<u8>, i64>){
 fn print_vector_word(vector_word:&Vec<u8>){
 	let mut print_str = String::from("");
 	for alpha in vector_word.iter(){
-		// println!("{} ", alpha.to_owned() as char);
-		// print!(" ");
-		// print_str += alpha.to_owned() as char;
 		print_str.push(alpha.to_owned() as char);
 	}
 	print!("{}",print_str);
+}
+
+
+fn find_english_word(content:&str)->Vec<Vec<u8>>{
+	let re = Regex::new(r"([a-z]+)").unwrap();
+	let mut words = Vec::<Vec<u8>>::new();
+	for match_word in re.captures_iter(&content){
+		let word = match_word.at(1).unwrap();
+		words.push(word.to_lowercase().as_bytes().to_owned());
+	}
+	words
+}
+
+
+fn read_line_of_input<R:Read>(reader:R, model:&HashMap<Vec<u8>,i64>){
+	let mut lines = BufReader::new(reader).lines();
+	while let Some(Ok(line)) = lines.next(){
+		correct(&line, &model);
+	}
+
 }
 
 
@@ -206,38 +216,61 @@ fn main(){
 	
 	file.read_to_string(&mut content).unwrap();
 
-	let re = Regex::new(r"([a-z]+)").unwrap();
-	let mut words = Vec::<Vec<u8>>::new();
-	for match_word in re.captures_iter(&content){
-		let word = match_word.at(1).unwrap();
-		// println!("{}", word);
-		// println!("{}", match_word.at().unwrap());
-		// println!("{}", word.as_bytes().to_owned());
-		words.push(word.as_bytes().to_owned());
-	}
-
+	let words = find_english_word(&content);
 	let model = train(&words);
 
 	println!("Trainging end");
 
 	read_line_of_input(stdin(),&model);
-	// for (iter,arg) in env::args().enumerate(){
-	// 	let correction = correct(&arg,&model);
-	// 	print_vector_word(&correction);
-
-	// }
-	// for (word,count) in &model{
-	// 	println!("{}: \"{}\"", word,count);
-	// }
 }
 
 
-fn read_line_of_input<R:Read>(reader:R, model:&HashMap<Vec<u8>,i64>){
-	let mut lines = BufReader::new(reader).lines();
-	while let Some(Ok(line)) = lines.next(){
-		// let correction = correct(&line,&model);
-		correct(&line, &model);
-		// print_vector_word(&correction);
+
+#[cfg(test)]
+mod test_for_spell_checking{
+	use super::{find_english_word,edit1,edit2};
+
+	#[test]
+	fn regex_match_test(){
+		let test_tring = "hello".as_bytes().to_owned();
+		let test_tring2 = "world".as_bytes().to_owned();
+		assert!(find_english_word("hello+").contains(&test_tring));
+		assert!(find_english_word("world!!!").contains(&test_tring2));
+		assert!(find_english_word("hello world!!! ").contains(&test_tring2));
+		assert!(find_english_word("hello world!!! ").contains(&test_tring));
 	}
 
+
+	#[test]
+	fn edit1_test(){
+		let set_of_edit_one = edit1(&"hello".as_bytes().to_owned());
+		assert!(set_of_edit_one.contains(&"hell".as_bytes().to_owned()));
+		assert!(set_of_edit_one.contains(&"helloo".as_bytes().to_owned()));
+		assert!(set_of_edit_one.contains(&"helo".as_bytes().to_owned()));
+		assert!(set_of_edit_one.contains(&"helle".as_bytes().to_owned()));
+		assert!(set_of_edit_one.contains(&"heslo".as_bytes().to_owned()));
+		assert!(set_of_edit_one.contains(&"helol".as_bytes().to_owned()));
+
+		assert!(!set_of_edit_one.contains(&"hellooo".as_bytes().to_owned()));
+		assert!(!set_of_edit_one.contains(&"heo".as_bytes().to_owned()));
+		assert!(!set_of_edit_one.contains(&"hablo".as_bytes().to_owned()));
+		assert!(!set_of_edit_one.contains(&"hleol;".as_bytes().to_owned()));
+	}
+
+
+	#[test]
+	fn edit2_test(){
+		let set_of_edit_one = edit2(&"hello".as_bytes().to_owned());
+		assert!(!set_of_edit_one.contains(&"hell".as_bytes().to_owned()));
+		assert!(!set_of_edit_one.contains(&"helloo".as_bytes().to_owned()));
+		assert!(!set_of_edit_one.contains(&"helo".as_bytes().to_owned()));
+		assert!(!set_of_edit_one.contains(&"helle".as_bytes().to_owned()));
+		assert!(!set_of_edit_one.contains(&"heslo".as_bytes().to_owned()));
+		assert!(!set_of_edit_one.contains(&"helol".as_bytes().to_owned()));
+
+		assert!(set_of_edit_one.contains(&"hellooo".as_bytes().to_owned()));
+		assert!(set_of_edit_one.contains(&"heo".as_bytes().to_owned()));
+		assert!(set_of_edit_one.contains(&"hablo".as_bytes().to_owned()));
+		assert!(set_of_edit_one.contains(&"hleol;".as_bytes().to_owned()));
+	}
 }
