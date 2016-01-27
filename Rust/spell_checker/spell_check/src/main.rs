@@ -11,8 +11,8 @@ use std::io::BufReader;
 
 
 fn train(words:&Vec<Vec<u8>>)->HashMap<Vec<u8>,i64>{
-	let mut model = HashMap::<Vec<u8>,i64>::new();
-	for word in words.iter(){
+	let mut model = HashMap::new();
+	for word in words{
 		let count = model.entry(word.to_owned()).or_insert(1);
 		*count += 1;
 	}
@@ -20,14 +20,18 @@ fn train(words:&Vec<Vec<u8>>)->HashMap<Vec<u8>,i64>{
 }
 
 
+static ALPHABET : &'static str = "abcdefghijklmnopqrstuvwxyz";
+
 fn edit1(word:&Vec<u8>)-> Vec<Vec<u8>>{
-	let alphabet = "abcdefghijklmnopqrstuvwxyz";
+	// let alphabet = "abcdefghijklmnopqrstuvwxyz";
 	let mut result = Vec::<Vec<u8>>::new();
 
-	delete(&word, &mut result);
-	replace(&word, &mut result, &alphabet);
-	inserts(&word, &mut result, &alphabet);
-	transpose(&word,&mut result);
+	delete(word, &mut result);
+	// replace(word, &mut result, &alphabet);
+	// inserts(word, &mut result, &alphabet);
+	replace(word, &mut result);
+	inserts(word, &mut result);
+	transpose(word,&mut result);
 
 	remove_duplicate(&mut result);
 
@@ -49,9 +53,9 @@ fn delete(word:&Vec<u8>,result:&mut Vec<Vec<u8>>){
 }
 
 
-fn replace(word: &Vec<u8>, result: &mut Vec<Vec<u8>>, alphabet:&str){
+fn replace(word: &Vec<u8>, result: &mut Vec<Vec<u8>>){
 	for i in 0..word.len(){
-		for alpha in alphabet.chars(){
+		for alpha in ALPHABET.chars(){
 			let mut replace_word = Vec::<u8>::new();
 			for (itr, c) in word.iter().enumerate(){
 				if itr!= i{
@@ -67,9 +71,9 @@ fn replace(word: &Vec<u8>, result: &mut Vec<Vec<u8>>, alphabet:&str){
 }
 
 
-fn inserts(word:&Vec<u8>,result:&mut Vec<Vec<u8>>, alphabet:&str){
+fn inserts(word:&Vec<u8>,result:&mut Vec<Vec<u8>>){
 	for i in 0..word.len(){
-		for alpha in alphabet.chars(){
+		for alpha in ALPHABET.chars(){
 			let mut ins = Vec::<u8>::new();
 			for (iter, c) in word.iter().enumerate(){
 				if iter == i{
@@ -81,7 +85,7 @@ fn inserts(word:&Vec<u8>,result:&mut Vec<Vec<u8>>, alphabet:&str){
 		}
 	}
 
-	for alpha in alphabet.chars(){
+	for alpha in ALPHABET.chars(){
 		let mut ins = Vec::<u8>::new();
 		for c in word.iter(){
 			ins.push(c.to_owned());
@@ -95,9 +99,7 @@ fn inserts(word:&Vec<u8>,result:&mut Vec<Vec<u8>>, alphabet:&str){
 fn transpose(word:&Vec<u8>, result:&mut Vec<Vec<u8>>){
 	for i in 0..(word.len()-1){
 		let mut trans_word = word.to_owned();
-		let temp = trans_word[i];
-		trans_word[i] = trans_word[i+1];
-		trans_word[i+1] = temp;
+		trans_word.swap(i,i+1);
 		result.push(trans_word);
 	}
 }
@@ -133,7 +135,7 @@ fn select_candidate(candidates: &Vec<Vec<u8>>, model:&HashMap<Vec<u8>,i64>)->Vec
 
 fn edit2(word:&Vec<u8>,model:&HashMap<Vec<u8>,i64>)->Vec<Vec<u8>>{
 	let mut result = Vec::<Vec<u8>>::new();
-	let _one_edit = edit1(&word);
+	let _one_edit = edit1(word);
 	for word_vector in _one_edit.iter(){
 		let _two_edit = edit1(&word_vector);
 		for two_word_vector in _two_edit.iter(){
