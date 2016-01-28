@@ -1,3 +1,39 @@
+#[doc="
+	__author__ = 'Xiangyu'
+
+	Spell Checking
+	Correct the typo for the english word. The program first train a language model to define the 
+	frequency of the corrent of the word inside a formal corpus, as the groung truth. Then the pro-
+	gram deal with differnt input string to correct it to the write word with the largest possi-
+	bility. The right word is assumed to be one/two edit different form the origin input.
+
+	Reference:
+	https://www.reddit.com/r/rust
+	https://github.com/jameswhang/Rust_Programs/blob/master/freq/src/main.rs
+
+	INPUT:
+	The first input is the name of the corpus file.
+	The second input is the lines of the words waiting to be corrected, one word per line.
+
+	OUTPUT:
+	The program would correct each input as the most likely right word. One word per line.
+		- If the word is correct, print the origin word, i.e:
+			hello
+		- If the word can be corrected, print the origin word and the corrected word in the format:
+			hell, hello
+		- if the right word can not be got from corpus, print the origin word in the format:
+			w, -
+
+	Assumptions:
+	  - The input file name is correct.
+	  - The correct word is one/two edit distance from the origin word.
+	  - If there is nothing in the file, program would start a new line to wait for the new coming input.
+	  - The txt contain the origin words is transported to the program in Linux way of < .
+"]
+
+
+
+
 extern crate regex;
 
 use std::io::prelude::*;
@@ -7,7 +43,6 @@ use std::collections::HashMap;
 use std::env;
 use std::io::stdin;
 use std::io::BufReader;
-// use std::io::{BufRead,BufReader,Read,stdin};
 
 
 fn train(words:&Vec<Vec<u8>>)->HashMap<Vec<u8>,i64>{
@@ -127,15 +162,13 @@ fn select_candidate(candidates: &Vec<Vec<u8>>, model:&HashMap<Vec<u8>,i64>)->Vec
 }
 
 
-fn edit2(word:&Vec<u8>,model:&HashMap<Vec<u8>,i64>)->Vec<Vec<u8>>{
+fn edit2(word:&Vec<u8>)->Vec<Vec<u8>>{
 	let mut result = Vec::<Vec<u8>>::new();
 	let _one_edit = edit1(word);
 	for word_vector in _one_edit.iter(){
 		let _two_edit = edit1(&word_vector);
 		for two_word_vector in _two_edit.iter(){
-			if model.contains_key(&two_word_vector[..]){
-				result.push(two_word_vector.to_owned());
-			}
+			result.push(two_word_vector.to_owned());
 		}
 	}
 	remove_duplicate(&mut result);
@@ -162,7 +195,7 @@ fn correct(word:&str, model:&HashMap<Vec<u8>, i64>){
 		return 
 	}
 	
-	let mut _two_edit = edit2(&vector_word,&model);
+	let mut _two_edit = edit2(&vector_word);
 	parse_candidate(&mut _two_edit,&model);
 	if _two_edit.len()>0{
 		print_vector_word(&vector_word); // format input when two edit different
@@ -260,17 +293,47 @@ mod test_for_spell_checking{
 
 	#[test]
 	fn edit2_test(){
-		let set_of_edit_one = edit2(&"hello".as_bytes().to_owned());
-		assert!(!set_of_edit_one.contains(&"hell".as_bytes().to_owned()));
-		assert!(!set_of_edit_one.contains(&"helloo".as_bytes().to_owned()));
-		assert!(!set_of_edit_one.contains(&"helo".as_bytes().to_owned()));
-		assert!(!set_of_edit_one.contains(&"helle".as_bytes().to_owned()));
-		assert!(!set_of_edit_one.contains(&"heslo".as_bytes().to_owned()));
-		assert!(!set_of_edit_one.contains(&"helol".as_bytes().to_owned()));
-
-		assert!(set_of_edit_one.contains(&"hellooo".as_bytes().to_owned()));
-		assert!(set_of_edit_one.contains(&"heo".as_bytes().to_owned()));
-		assert!(set_of_edit_one.contains(&"hablo".as_bytes().to_owned()));
-		assert!(set_of_edit_one.contains(&"hleol;".as_bytes().to_owned()));
+		let set_of_edit_two = edit2(&"hello".as_bytes().to_owned());
+		assert!(set_of_edit_two.contains(&"hellooo".as_bytes().to_owned()));
+		assert!(set_of_edit_two.contains(&"heo".as_bytes().to_owned()));
+		assert!(set_of_edit_two.contains(&"hablo".as_bytes().to_owned()));
 	}
+}
+
+#[cfg(test)]
+mod test_for_module_function{
+	use super::{count_delete, count_replace, count_inserts, count_transpose};
+
+	#[test]
+	fn test_delete_char(){
+		let mut set = Vec::<Vec<u8>>::new();
+		assert!(!set.contains(&"hell".as_bytes().to_owned()));
+		count_delete(&"hello".as_bytes().to_owned(),&mut set);
+		assert!(set.contains(&"hell".as_bytes().to_owned()));
+	}
+
+	#[test]
+	fn test_insert_char(){
+		let mut set = Vec::<Vec<u8>>::new();
+		assert!(!set.contains(&"helloa".as_bytes().to_owned()));
+		count_inserts(&"hello".as_bytes().to_owned(),&mut set);
+		assert!(set.contains(&"helloa".as_bytes().to_owned()));
+	}
+
+	#[test]
+	fn test_replace_char(){
+		let mut set = Vec::<Vec<u8>>::new();
+		assert!(!set.contains(&"hella".as_bytes().to_owned()));
+		count_replace(&"hello".as_bytes().to_owned(),&mut set);
+		assert!(set.contains(&"hella".as_bytes().to_owned()));
+	}
+
+	#[test]
+	fn test_transpose_char(){
+		let mut set = Vec::<Vec<u8>>::new();
+		assert!(!set.contains(&"helol".as_bytes().to_owned()));
+		count_transpose(&"hello".as_bytes().to_owned(),&mut set);
+		assert!(set.contains(&"helol".as_bytes().to_owned()));
+	}
+
 }
