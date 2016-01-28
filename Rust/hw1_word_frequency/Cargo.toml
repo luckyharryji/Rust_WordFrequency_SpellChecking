@@ -1,0 +1,7 @@
+[package]
+name = "hw1_word_frequency"
+version = "0.1.0"
+authors = ["luckyharryji <xiangyu.ji@outlook.com>"]
+
+[dependencies]
+itertools = "0.3.21"
