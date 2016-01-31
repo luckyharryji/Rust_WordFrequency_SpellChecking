@@ -45,11 +45,18 @@ use std::io::stdin;
 use std::io::BufReader;
 
 
-fn train(words:&Vec<Vec<u8>>)->HashMap<Vec<u8>,i64>{
-	let mut model = HashMap::new();
+type CountTable = std::collections::HashMap<Vec<u8>, usize>;
+
+#[allow(dead_code)]
+fn increment_word(map: &mut CountTable, word: Vec<u8>) {
+    *map.entry(word).or_insert(1) += 1;
+}
+
+
+fn train(words:Vec<Vec<u8>>)->CountTable{
+	let mut model = CountTable::new();
 	for word in words{
-		let count = model.entry(word.to_owned()).or_insert(1);
-		*count += 1;
+		increment_word(&mut model,word);
 	}
 	model
 }
@@ -143,12 +150,12 @@ fn remove_duplicate(words: &mut Vec<Vec<u8>>){
 }
 
 
-fn parse_candidate(words:&mut Vec<Vec<u8>>, model:&HashMap<Vec<u8>,i64>){
+fn parse_candidate(words:&mut Vec<Vec<u8>>, model:&CountTable){
 	words.retain(|word| model.contains_key(&word[..]));
 }
 
 
-fn select_candidate(candidates: &Vec<Vec<u8>>, model:&HashMap<Vec<u8>,i64>)->Vec<u8>{
+fn select_candidate(candidates: &Vec<Vec<u8>>, model:&CountTable)->Vec<u8>{
 	let mut count = 0;
 	let mut result = Vec::<u8>::new();
 	for candidate in candidates{
@@ -176,7 +183,7 @@ fn edit2(word:&Vec<u8>)->Vec<Vec<u8>>{
 }
 
 
-fn correct(word:&str, model:&HashMap<Vec<u8>, i64>){
+fn correct(word:&str, model:&CountTable){
 	let vector_word:Vec<u8> = word.as_bytes().to_owned();
 
 	if model.contains_key(&vector_word[..]){
@@ -230,7 +237,7 @@ fn find_english_word(content:&str)->Vec<Vec<u8>>{
 }
 
 
-fn read_line_of_input<R:Read>(reader:R, model:&HashMap<Vec<u8>,i64>){
+fn read_line_of_input<R:Read>(reader:R, model:&CountTable){
 	let mut lines = BufReader::new(reader).lines();
 	while let Some(Ok(line)) = lines.next(){
 		correct(&line, &model);
@@ -250,9 +257,7 @@ fn main(){
 	file.read_to_string(&mut content).unwrap();
 
 	let words = find_english_word(&content);
-	let model = train(&words);
-
-	println!("Trainging end");
+	let model = train(words);
 
 	read_line_of_input(stdin(),&model);
 }
